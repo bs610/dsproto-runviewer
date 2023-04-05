@@ -2,9 +2,9 @@
 function historyURL(setup, group, panel, tstart, tstop) {
    var baseURL = ''
    if (setup === 1) {
-      baseURL='http://darkside-cdaq.na.infn.it/midas'
+      baseURL=(process.env.REACT_APP_HISTORYURL1 || 'http://darkside-cdaq.na.infn.it/midas')
    } else if (setup === 2) {
-      baseURL='http://darkside-daq.na.infn.it/midas'
+      baseURL=(process.env.REACT_APP_HISTORYURL2 || 'http://darkside-daq.na.infn.it/midas')
    }
    if (tstop === undefined)
       tstop = Math.floor(Date.now() / 1000)

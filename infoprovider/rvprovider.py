@@ -36,7 +36,11 @@ if args.run:
         print('E: missing setup option')
         sys.exit(-1)
     run = str(args.run).zfill(int(os.getenv('RUNNUMWIDTH')))
-    rundir = os.getenv(f"RUNDIR{args.setup}") + '/' + f'run{run}'
+    rundir = os.getenv(f"RUNDIR{args.setup}")
+
+    if os.getenv("RUNDIR_USES_SUBDIRS"):
+        rundir += f"/run{run}"
+        
     print('I: fetch ODB from run file')
     try:
         flist = os.listdir(rundir)
@@ -51,7 +55,7 @@ if args.run:
     startFile = stopFile = None
     fdict = {}      # key is subrun
     for f in flist:
-        if f.startswith(f'run{run}'):
+        if f.startswith(f'run{run}') and f.find(".mid") != -1 and f.find("crc32") == -1:
             mlist = re.findall('\d+', f)
             if len(mlist) > 1:
                 subrun = int(mlist[1])

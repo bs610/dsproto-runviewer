@@ -5,7 +5,8 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
 // states
-import { viewState } from "../state/atoms"
+import { viewState } from "../state/atoms";
+import setupName from "../utils/setupname";
 
 const RunHeader = () => {
 
@@ -13,9 +14,12 @@ const RunHeader = () => {
   const [title, setTitle] = useState(null)
 
   useEffect(() => {
-    if (view.runNumber)
-      setTitle(`SETUP - ${view.setup} / run: ${view.runNumber}`)
-    else setTitle(`SETUP - ${view.setup}`)
+    
+    if (view.runNumber) {
+      setTitle(`${setupName(view.setup)} / run: ${view.runNumber}`)
+    } else {
+      setTitle(`${setupName(view.setup)}`)
+    }
   }, [view.setup, view.runNumber])
 
   return (
