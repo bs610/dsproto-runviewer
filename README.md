@@ -2,7 +2,7 @@
 
 The run viewer extracts information from the midas ODB and stores it in a MySQL database. A web interface allows the user to view the information.
 
-## Setup 1 / setup 2
+## Setup 1 / setup 2 explanation
 
 The runviewer was initially created for the Napoli test facility, which has 2 DAQ setups. Setup 1 used V1725 digitizers, while setup 2 used VX2740 digitizers.
 
@@ -12,19 +12,20 @@ The UK test facilities use VX2740/VX2745 digitizers, so are most similar to Napo
 
 ### Python
 
-Python 3.7 or higher is needed.
+Python 3.7 or higher is needed. Run `python3 --version` to see what version you currently have. On Ubuntu 20.04 you can install python3.8 from apt.
 
-For python, we need `python-dotenv`, `mysql-connector-python` and `lz4`. E.g. `python3.8 -m pip install python-dotenv mysql-connector-python lz4 --user`.
+For python, we need `python-dotenv`, `mysql-connector-python` and `lz4`. Install using pip, e.g. `python3.8 -m pip install python-dotenv mysql-connector-python lz4 --user`.
 
 We also need access to the midas python client. See https://daq00.triumf.ca/MidasWiki/index.php/Python.
 
 ### Node/npm
 
-NodeJS > 10.0 is required. Hopefully this is already available via apt/yum.
+NodeJS > v10.0 is required. Try installing via apt/yum first, then run `node --version` to see what version you have. 
 
-Ubuntu 20.04 comes with NodeJS v8 and required manual compilation:
+On Ubuntu 20.04 only v8.10 is available via apt, and the binaries from the Node website weren't compatible, so I had to do a manual compilation as a last resort:
 
 ```
+# Last resort! Hopefully you can get node via apt/yum instead!
 cd ~/packages
 wget https://nodejs.org/dist/v18.15.0/node-v18.15.0.tar.gz
 ./configure --prefix=~/packages/node-v18.15.0-linux-x64
@@ -33,19 +34,6 @@ make install
 export PATH=~/packages/node-v18.15.0-linux-x64/bin:$PATH
 # Add to .bashrc as well!
 
-```
-
-After installing node and npm, you can install this package and dependencies.
-
-```
-mkdir ~/node
-npm config set prefix=$HOME/node
-
-cd ~/packages/dsproto-runviewer
-npm link
-npm install
-export REACT_APP_BASEURL="/runviewer”
-# Add to .bashrc as well
 ```
 
 ### MySQL
@@ -76,10 +64,23 @@ Then:
 * `sudo systemctl enable mysql`
 * `sudo systemctl start mysql`
 
+### Installing this package
 
-## Database schema
+node/npm need to know about this package.
 
-A MySQL database is required. Installing the MySQL server depends on your OS and is not documented here. After installing MySQL and starting the server, run the following commands as the MySQL root user:
+```
+mkdir ~/node
+npm config set prefix=$HOME/node
+
+cd ~/packages/dsproto-runviewer
+npm link
+npm install
+export REACT_APP_BASEURL="/runviewer”
+```
+
+### Creating the database/user/table
+
+This assumes you have installed the MySQL server and started the mysqld service. Connect to MySQL as and enter the `<new_mysql_root_password>` you specified in the `ALTER USER` statement previously.
 
 ```
 mysql -uroot -p
@@ -95,7 +96,7 @@ GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,INDEX,ALTER,REFERENCES,TRIGGER ON ds.* 
 CREATE TABLE `params` ( `id` int(11) NOT NULL AUTO_INCREMENT,  `setup` int(11) NOT NULL,  `run` int(11) NOT NULL,  `jsonstart` mediumtext,  `jsonstop` mediumtext,  PRIMARY KEY (`id`));
 ```
 
-## Configuration
+### Configuration
 
 Create a file called `.env` in the root directory of this package. See `.env.sample` for an example.
 
@@ -115,16 +116,36 @@ The parameters are:
 * `REACT_APP_HISTORYURL1` - URL of midas webpage for "setup 1". Blank for UK facilities.
 * `REACT_APP_HISTORYURL2` - URL of midas webpage for "setup 2".
 
+## Start the application
+
+We should now have everything we need to start the server!
+
+Run these commands from the root directory of this package:
+
+```
+npm run build:prod
+npm run start:prod
+```
+
+The second of these should tell you that the server is running on port 4000.
+
+Navigate to http://localhost:4000/runviewer and you should hopefully see a webpage. Check the terminal to see if any errors are reported.
+
+If your firewall prevents access to port 4000 from the outside world, you may need to set up a "real" webserver (e.g. apache/nginx) and proxy to localhost:4000. At TRIUMF we use `ProxyPass /runviewer http://localhost:4000/runviewer retry=1` in apache.
+
 ## Populating the database
 
 ### Automatically adding each run
 
 Midas can run a script at the start/end of each run. In the ODB, set keys like:
 
-* `/Programs/Execute on start run` to `python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup 2 --sync` or similar.
-* `/Programs/Execute on stop run` to `python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup 2 --sync` or similar.
+```
+# The exact commands to execute vary based on your version of python and where you installed this package!
+odbedit -c 'set "/Programs/Execute on start run" "python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup 2 --sync"'
+odbedit -c 'set "/Programs/Execute on stop run"  "python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup 2 --sync"'
+```
 
-The exact command varies based on your version of python and where you installed this package. This will extract ODB information from the live experiment and add it to the database.
+This will extract ODB information from the live experiment and add it to the database.
 
 ### Adding missing runs via midas files
 
