@@ -6,9 +6,7 @@ class SequencerProvider:
 
         self.data['loopCounter'] = odb['State']['Loop counter'][0]
         self.data['loopLimit'] = odb['State']['Loop n'][0]
-        for line in odb['Script']['Lines']:
-            if line.startswith('RUNDESCRIPTION'):
-                self.data['runDescription'] = line.split('"')[1]
-
+        self.data['runDescription'] = odb['Variables']['run_type']
+        
     def getData(self):
         return self.data
