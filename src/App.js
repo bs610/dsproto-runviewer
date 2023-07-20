@@ -15,6 +15,7 @@ import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
+  const site_list = require('./sites.json');
 
   return (
     <Box sx={{
@@ -32,8 +33,11 @@ const App = () => {
             <Route path="info" element={<RunInfo />} />
             <Route path={"get/:setup/:run"} element={<RunInfoProvider />} />
           </Route>
-          <Route path="setup-1" element={<RunList setup={1}/>} />
-          <Route path="setup-2" element={<RunList setup={2}/>} />
+
+          {site_list.map((site)=>{
+            return <Route path={`${site.name}`} element={<RunList setup={`${site.id}`} />} />;
+          })}
+
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

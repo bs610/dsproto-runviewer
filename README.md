@@ -2,11 +2,13 @@
 
 The run viewer extracts information from the midas ODB and stores it in a MySQL database. A web interface allows the user to view the information.
 
-## Setup 1 / setup 2 explanation
+## Site/setup explanation
 
-The runviewer was initially created for the Napoli test facility, which has 2 DAQ setups. Setup 1 used V1725 digitizers, while setup 2 used VX2740 digitizers.
+The plan for the UK is to have one site host the database and webserver.  All the other sites will send information about their runs to this central site.
 
-The UK test facilities use VX2740/VX2745 digitizers, so are most similar to Napoli setup 2. We can hide the "setup 1" buttons from the UI using a configuration option (see below), but you will still need to refer to "setup 2" in some of the admin scripts.
+The central site will need to have node/npm and a MySQL server installed. A single database will store the info from all sites.
+
+The other sites only need to run the `rvprovider.py` script at the start/end of each run.
 
 ## Pre-requisites
 
@@ -100,21 +102,14 @@ CREATE TABLE `params` ( `id` int(11) NOT NULL AUTO_INCREMENT,  `setup` int(11) N
 
 Create a file called `.env` in the root directory of this package. See `.env.sample` for an example.
 
-The parameters are:
+The parameters need for the central server are:
 * `DBHOST` - Database host name. Possibly `localhost`.
 * `DBUSER` - Probably `runviewer`.
 * `DBPASS` - Whatever you used in the `CREATE USER` command.
 * `DBNAME` - Should be `ds`.
-* `RUNDIR1` - Where midas data files are stored for "setup 1".
-* `RUNDIR2` - Where midas data files are stored for "setup 2".
+* `RUNDIR` - Where midas data files are stored.
 * `RUNDIR_USES_SUBDIRS` - Should be `0` unless running at Napoli (where it should be `1`).
 * `RUNNUMWIDTH` - Probably `5`. If midas file names look like `run00123.mid.lz4` then the "run number" is being stored as a 5-digit number. If it looks like `run000123.mid.lz4` then use `6` etc.
-* `REACT_APP_SHOWSETUP1` - Whether to show "setup 1" in the web display. `0` for UK facilities, `1` for Napoli.
-* `REACT_APP_SHOWSETUP2` - Whether to show "setup 2" in the web display. `1` for all facilities.
-* `REACT_APP_SETUP1NAME` - Human-readable name of "setup 1". Blank for UK facilities.
-* `REACT_APP_SETUP2NAME` - Human-readable name of "setup 1". E.g. `Liverpool` for Liverpool facility.
-* `REACT_APP_HISTORYURL1` - URL of midas webpage for "setup 1". Blank for UK facilities.
-* `REACT_APP_HISTORYURL2` - URL of midas webpage for "setup 2".
 
 ## Start the application
 
@@ -141,18 +136,20 @@ Midas can run a script at the start/end of each run. In the ODB, set keys like:
 
 ```
 # The exact commands to execute vary based on your version of python and where you installed this package!
-odbedit -c 'set "/Programs/Execute on start run" "python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup 2 --sync"'
-odbedit -c 'set "/Programs/Execute on stop run"  "python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup 2 --sync"'
+odbedit -c 'set "/Programs/Execute on start run" "python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup Liverpool --sync"'
+odbedit -c 'set "/Programs/Execute on stop run"  "python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup Liverpool --sync"'
 ```
 
 This will extract ODB information from the live experiment and add it to the database.
+
+The full list of available site/setup names in in `sites.json`.
 
 ### Adding missing runs via midas files
 
 If you have some missing runs, you can manually run the `rvprovider.py` script:
 
 ```
-python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup 2 --run 900
+python3.8 ~/packages/dsproto-runviewer/infoprovider/rvprovider.py --setup Liverpool --run 900
 ```
 
 This will find the midas file for run #900, extract the relevant ODB information, and add it to the database.

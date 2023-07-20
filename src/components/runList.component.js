@@ -126,7 +126,7 @@ const RunList = (props) => {
     },
     {
       field: "writeData",
-      headerName: "on disk",
+      headerName: "data written",
       width: 120,
       align: "center",
       renderCell: (params) => {

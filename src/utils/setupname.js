@@ -1,13 +1,14 @@
 function setupName(setup) {
-   var setupStr;
+  const sites = require('../sites.json');
+  let i_setup = parseInt(setup);
 
-   if (setup === "1") {
-     setupStr = process.env.REACT_APP_SETUP1NAME || `SETUP - ${setup}`;
-   } else {
-     setupStr = process.env.REACT_APP_SETUP2NAME || `SETUP - ${setup}`;
-   }
+  for (let i = 0; i < sites.length; i++) {
+    if (sites[i].id === i_setup) {
+      return sites[i].name;
+    }
+  }
 
-   return setupStr;
+  return "???";
 }
 
 export default setupName

@@ -1,15 +1,33 @@
+function getBaseURL(setup) {
+   var baseURL = '';
+   const sites = require("../sites.json");
+   let i_setup = parseInt(setup);
+
+   for (let i = 0; i < sites.length; i++) {
+      if (sites[i].id === i_setup) {
+         baseURL = sites[i].history_url;
+         break;
+      }
+   }
+
+   return baseURL;
+}
 
 function historyURL(setup, group, panel, tstart, tstop) {
-   var baseURL = ''
-   if (setup === 1) {
-      baseURL=(process.env.REACT_APP_HISTORYURL1 || 'http://darkside-cdaq.na.infn.it/midas')
-   } else if (setup === 2) {
-      baseURL=(process.env.REACT_APP_HISTORYURL2 || 'http://darkside-daq.na.infn.it/midas')
+   var baseURL = getBaseURL(setup);
+
+   if (baseURL === '') {
+      return '';
    }
+   
    if (tstop === undefined)
       tstop = Math.floor(Date.now() / 1000)
-      
+
    return [baseURL, '/?cmd=History', `&group=${group}`, `&panel=${panel}`, `&A=${tstart}`, `&B=${tstop}`].join('')
 }
 
-export default historyURL
+function isHistoryURLDefined(setup) {
+   return getBaseURL(setup) !== '';
+}
+
+export {historyURL as default, isHistoryURLDefined}

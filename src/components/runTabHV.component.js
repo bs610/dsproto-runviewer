@@ -15,6 +15,7 @@ import { v4 } from 'uuid'
 import RunBorSection from "./runBorSection.component";
 import RunEorSection from "./runEorSection.component";
 import historyURL from "../utils/mhistory";
+import isHistoryURLDefined from "../utils/mhistory";
 
 function getMetricByName(name, data) {
   var found = null;
@@ -87,20 +88,24 @@ const RunTabHV = (props) => {
   const renderHVTable = (hv) => {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", m: 2 }}>
-        <Button
-          href={historyURL(
-            props.setup,
-            "Voltages",
-            "HV",
-            props.currentRun.info.startTimestamp,
-            props.currentRun.info.stopTimestamp
-          )}
-          target="_blank"
-          variant="contained"
-          endIcon={<BarChartIcon />}
-        >
-          History Plot
-        </Button>
+        {
+          isHistoryURLDefined(props.setup) ? 
+            <Button
+              href={historyURL(
+                props.setup,
+                "Voltages",
+                "HV",
+                props.currentRun.info.startTimestamp,
+                props.currentRun.info.stopTimestamp
+              )}
+              target="_blank"
+              variant="contained"
+              endIcon={<BarChartIcon />}
+            >
+              History Plot
+            </Button>
+          : null
+        }
         {hv.modules.map((mod) => (
           <TableContainer sx={{ m: 1 }} key={v4()}>
             <Typography variant="h6" fontWeight="bold" sx={{ m: 1 }}>

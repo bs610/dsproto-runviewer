@@ -14,6 +14,7 @@ import { v4 } from 'uuid'
 import RunBorSection from "./runBorSection.component";
 import RunEorSection from "./runEorSection.component";
 import historyURL from "../utils/mhistory";
+import isHistoryURLDefined from "../utils/mhistory";
 
 const RunTabDT = (props) => {
   const dtStart = props.currentRun.start.DT;
@@ -22,20 +23,24 @@ const RunTabDT = (props) => {
   const renderDTTable = (dt) => {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", m: 2 }}>
-        <Button
-          href={historyURL(
-            props.setup,
-            "Default",
-            "Temperature",
-            props.currentRun.info.startTimestamp,
-            props.currentRun.info.stopTimestamp
-          )}
-          target="_blank"
-          variant="contained"
-          endIcon={<BarChartIcon />}
-        >
-          History Plot
-        </Button>
+        {
+          isHistoryURLDefined(props.setup) ? 
+            <Button
+              href={historyURL(
+                props.setup,
+                "Default",
+                "Temperature",
+                props.currentRun.info.startTimestamp,
+                props.currentRun.info.stopTimestamp
+              )}
+              target="_blank"
+              variant="contained"
+              endIcon={<BarChartIcon />}
+            >
+              History Plot
+            </Button>
+          : null
+        }
         {dt.modules.map((mod) => (
           <TableContainer sx={{ m: 1 }} key={v4()}>
             <Table sx={{ width: 4 / 5 }} size="small">

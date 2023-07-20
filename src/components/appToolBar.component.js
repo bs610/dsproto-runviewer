@@ -31,13 +31,6 @@ const AppBarButton = withStyles(theme => ({
 const SwitchSetupButton = (props) => {
   const setView = useSetRecoilState(viewState)
 
-  if (props.new_setup === "1" && process.env.REACT_APP_SHOWSETUP1 === "0") {
-    return (null);
-  }
-  if (props.new_setup === "2" && process.env.REACT_APP_SHOWSETUP2 === "0") {
-    return (null);
-  }
-
   return (
     <AppBarButton
             sx={{ display: "flex", justifyContent: "center", width: 0.5 / 5, p: 1 }}
@@ -53,6 +46,7 @@ const SwitchSetupButton = (props) => {
 
 const AppToolBar = () => {
   const classes = useStyles();
+  const sites = require("../sites.json")
 
   return (
     <Box>
@@ -60,8 +54,10 @@ const AppToolBar = () => {
         <Toolbar sx={{ display: "flex", flexDirection: "row", width: 5 / 5, bgcolor: 'primary.dark', color: "white" }}>
           <Typography variant="h6" sx={{ display: "flex", justifyContent: "center", width: 0.5 / 5, color: 'white' }}>Run Viewer</Typography>
           
-          <SwitchSetupButton new_setup="1" />
-          <SwitchSetupButton new_setup="2" />
+          {sites.map((site)=>{
+            return <SwitchSetupButton new_setup={`${site.id}`} />;
+          })}
+          
         </Toolbar>
       </AppBar>
     </Box>

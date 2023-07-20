@@ -10,6 +10,7 @@ import Button from "@mui/material/Button";
 import BarChartIcon from "@mui/icons-material/BarChart";
 
 import historyURL from "../utils/mhistory";
+import isHistoryURLDefined from "../utils/mhistory";
 
 const RunTabRI = (props) => {
   const renderListItem = (name, value) => {
@@ -104,21 +105,25 @@ const RunTabRI = (props) => {
           <Typography variant="h6" fontWeight="bold" sx={{ m: 1 }}>
             Events
           </Typography>
-          <Button
-            sx={{ display: "flex", width: 4.5 / 5, ml: 5, mr: 5 }}
-            href={historyURL(
-              props.setup,
-              "Default",
-              "Trigger rate",
-              props.currentRun.info.startTimestamp,
-              props.currentRun.info.stopTimestamp
-            )}
-            target="_blank"
-            variant="contained"
-            endIcon={<BarChartIcon />}
-          >
-            History Plot
-          </Button>
+          {
+            isHistoryURLDefined(props.setup) ?
+              <Button
+                sx={{ display: "flex", width: 4.5 / 5, ml: 5, mr: 5 }}
+                href={historyURL(
+                  props.setup,
+                  "Default",
+                  "Trigger rate",
+                  props.currentRun.info.startTimestamp,
+                  props.currentRun.info.stopTimestamp
+                )}
+                target="_blank"
+                variant="contained"
+                endIcon={<BarChartIcon />}
+              >
+                History Plot
+              </Button>
+            : null
+          }
           <List
             dense
             sx={{
@@ -129,7 +134,7 @@ const RunTabRI = (props) => {
             }}
           >
             {renderListItem(
-              "data on disk",
+              "data written",
               props.currentRun.info.writeData.toString()
             )}
             {props.currentRun.info.status === "finished" &&
