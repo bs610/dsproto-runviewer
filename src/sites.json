@@ -1,6 +1,8 @@
 [
   {"name": "Edinburgh", "id": 1, "history_url": ""},
-  {"name": "Liverpool", "id": 2, "history_url": ""},
-  {"name": "RHUL",      "id": 3, "history_url": ""},
-  {"name": "Warsaw",    "id": 4, "history_url": ""}
+  {"name": "Lancaster", "id": 2, "history_url": ""},
+  {"name": "Liverpool", "id": 3, "history_url": ""},
+  {"name": "RHUL",      "id": 4, "history_url": ""},
+  {"name": "Warsaw",    "id": 5, "history_url": ""},
+  {"name": "Warwick",   "id": 6, "history_url": ""}
 ]
