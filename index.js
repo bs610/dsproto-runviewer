@@ -13,6 +13,8 @@ const db = mysql.createPool({
 const app = express();
 const port = 4000;
 
+const sites = require("./src/sites.json")
+
 app.use(express.json());
 
 const runapp = express.Router();
@@ -242,6 +244,92 @@ runapp.get("/api/:setup/id/:id", (req, res) => {
         buildRun(result[0][0]).then((result) => res.send(result));
     });
   }
+
+});
+
+
+// Route to add a run to the database. Uses POST fields
+runapp.post("/api/add", (req, res) => {
+  // Already JSON-decoded
+  let data = req.body;
+
+  if (!data.hasOwnProperty("run")) {
+    res.status(400).json({"error": "run parameter is missing. " + data});
+    return;
+  }
+  if (!data.hasOwnProperty("setup")) {
+    res.status(400).json({"error": "setup parameter is missing"});
+    return;
+  }
+  if (!data.hasOwnProperty("odbsource")) {
+    res.status(400).json({"error": "odbsource parameter was missing"});
+    return;
+  }
+  if (data.odbsource !== "ONLINE" && data.odbsource !== "FILE") {
+    res.status(400).json({"error": "odbsource parameter should be ONLINE or FILE"});
+    return;
+  }
+  if (data.odbsource === "ONLINE" && !data.hasOwnProperty("odb")) {
+    res.status(400).json({"error": "odb parameter must be present for odbsource=ONLINE"});
+    return;
+  }
+  if (data.odbsource === "FILE" && (!data.hasOwnProperty("odbstart") || !data.hasOwnProperty("odbend"))) {
+    res.status(400).json({"error": "odbstart and odbend parameters must be present for odbsource=FILE"});
+    return;
+  }
+
+  db.query(
+    "SELECT COUNT(*) FROM params WHERE setup=? AND run=?",
+    [data.setup, data.run],
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        res.status(400).json({"error": "failed to check if run already exists"});
+      }
+    }
+  ).then((result) => {
+    let run_exists = result[0][0] > 0;
+
+    let query = null;
+    let values = [];
+  
+    if (data.odbsource === "ONLINE") {
+      if (run_exists) {
+        query = "UPDATE params SET jsonstop=? WHERE setup=? AND run=?";
+        values = [data.odb, data.setup, data.run];
+      } else {
+        query = "INSERT INTO params SET setup=?, run=?, jsonstart=?";
+        values = [data.setup, data.run, data.odb];
+      }
+    } else {
+      // FILE
+      if (!run_exists || (data.hasOwnProperty("force") && data.force)) {
+        query = "INSERT INTO params SET setup=?, run=?, jsonstart=?, jsonstop=?";
+        values = [data.setup, data.run, data.odbstart, data.odbend];
+      }
+    }
+
+    if (query === null) {
+      res.status(200).json({"ok": "no work to do"});
+      return;
+    }
+
+    db.query(
+      query,
+      values,
+      (err, result) => {
+        if (err) {
+          console.log(err);
+          res.status(400).json({"error": "failed to insert/update run"});
+          return;
+        }
+      }
+    ).then((result) => {
+      res.status(200).json({"ok": "run updated"});
+      return;
+    });
+  
+  });
 
 });
 

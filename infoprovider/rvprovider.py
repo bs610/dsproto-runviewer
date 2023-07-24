@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 
 import config.odb_summary
 import config.sites
-from db.rundb import RunDb
 
 if __name__ == "__main__":
     load_dotenv()
@@ -28,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument('--host', action='store', type=str, help='MIDAS hostname')
     parser.add_argument('--expt', action='store', type=str, help='MIDAS experiment name')
     parser.add_argument('--verbose', action='store_true', help='print additional info on screen')
+    parser.add_argument('--use-api', action='store_true', help="Use a remote webserver API rather than direct database access")
     args = parser.parse_args()
 
     sys.dont_write_bytecode = True
@@ -145,24 +145,58 @@ if __name__ == "__main__":
         print(jsonDoc)
         sys.exit(0)
 
-    db = RunDb(os.getenv('DBHOST'), os.getenv('DBUSER'), os.getenv('DBPASS'), os.getenv('DBNAME'))
+    if args.use_api:
+        # POST data to remote webserver API
+        import requests
+        import requests.auth
 
-    if odbSource == 'ONLINE':
-        if db.hasRun(setup_id, runNumber):
-            # update stop summary
-            db.updateStopField(setup_id, runNumber, json.dumps(summary))
+        payload = {"setup": setup_id, "run": runNumber, "odbsource": odbSource}
+        if args.force:
+            payload["force"] = True
+        if odbSource == 'ONLINE':
+            payload["odb"] = json.dumps(summary)
+        elif odbSource == 'FILE':
+            payload["odbstart"] = json.dumps(summaryStart)
+            payload["odbend"] = json.dumps(summaryStop)
+    
+        url = os.getenv('API_URL')
+
+        if os.getenv('API_USER') is not None:
+            auth = requests.auth.HTTPBasicAuth(os.getenv('API_USER'), os.getenv('API_PASS'))
         else:
-            # update start summary
-            db.updateStartField(setup_id, runNumber, json.dumps(summary))
-    elif odbSource == 'FILE':
-        if db.hasRun(setup_id, runNumber):
-            if args.force:
-                db.delete(setup_id, runNumber)
-                print(f"I: run {runNumber} already in db - removed")
+            auth = None
+
+        headers = {'Content-Type': 'application/json'}
+
+        req = requests.post(url, data=json.dumps(payload), auth=auth, headers=headers)
+
+        if req.status_code != 200:
+            print(f"E: failed to submit run {runNumber}: code {req.status_code}: {req.text}")
+        else:
+            print(f"I: run {runNumber} - info added/updated")
+
+    else:
+        # Direct DB access
+        from db.rundb import RunDb
+
+        db = RunDb(os.getenv('DBHOST'), os.getenv('DBUSER'), os.getenv('DBPASS'), os.getenv('DBNAME'))
+
+        if odbSource == 'ONLINE':
+            if db.hasRun(setup_id, runNumber):
+                # update stop summary
+                db.updateStopField(setup_id, runNumber, json.dumps(summary))
             else:
-                print(f"I: run {runNumber} already in db - no action executed")
-                sys.exit(0)
-        db.updateStartField(setup_id, runNumber, json.dumps(summaryStart))
-        db.updateStopField(setup_id, runNumber, json.dumps(summaryStop))
-        print(f"I: run {runNumber} - info added/updated")
+                # update start summary
+                db.updateStartField(setup_id, runNumber, json.dumps(summary))
+        elif odbSource == 'FILE':
+            if db.hasRun(setup_id, runNumber):
+                if args.force:
+                    db.delete(setup_id, runNumber)
+                    print(f"I: run {runNumber} already in db - removed")
+                else:
+                    print(f"I: run {runNumber} already in db - no action executed")
+                    sys.exit(0)
+            db.updateStartField(setup_id, runNumber, json.dumps(summaryStart))
+            db.updateStopField(setup_id, runNumber, json.dumps(summaryStop))
+            print(f"I: run {runNumber} - info added/updated")
 

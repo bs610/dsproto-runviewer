@@ -10,11 +10,13 @@ class SiteList:
     def __init__(self):
         self.sites = []
 
-        json_file = os.path.normpath(os.path.join(__file__, "..", "..", "src", "sites.json"))
-        data = json.load(json_file)
+        json_file = os.path.normpath(os.path.join(__file__, "..", "..", "..", "src", "sites.json"))
+        
+        with open(json_file) as json_file:
+          data = json.load(json_file)
 
-        for obj in data:
-            self.sites.append(Site(obj["name"], obj["id"]))
+          for obj in data:
+              self.sites.append(Site(obj["name"], obj["id"]))
 
     def get_site_names(self):
         return sorted([s.name for s in self.sites])
